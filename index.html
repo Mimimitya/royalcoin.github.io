@@ -215,24 +215,6 @@
                 padding: 5px;
             }
         }
-.coin-fly {
-    position: absolute;
-    color: #ff0;
-    font-size: 20px;
-    animation: fly 1s linear forwards;
-    pointer-events: none;
-}
-
-@keyframes fly {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-50px);
-    }
-}
 
         .click-button {
             -webkit-tap-highlight-color: transparent; /* Для браузеров на базе WebKit (Chrome, Safari) */
@@ -241,7 +223,6 @@
             -ms-touch-action: manipulation; /* Для Internet Explorer */
             touch-action: manipulation; /* Современные браузеры */
         }
-        
     </style>
 </head>
 <body>
@@ -269,7 +250,6 @@
     <div class="shop-item" id="boostMaxEnergy">Boost Max Energy (Cost: <span id="boostMaxEnergyPrice">175</span> coins)</div>
 </div>
 
-
 <div class="referral" id="referral">
     <div class="close-referral" id="closeReferral">✖</div>
     <div>Referral Code: <input type="text" id="referralCode" readonly></div>
@@ -280,27 +260,24 @@
 <div class="task" id="task">
     <div class="close-task" id="closeTask">✖</div>
     <div>
-        <a href="https://t.me/your_channel_username" target="_blank">
+        <a href="https://t.me/royalcoin2024" target="_blank">
             Subscribe to Telegram Channel (+10,000 coins)
         </a>
     </div>
 </div>
 
-
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 <script>
     // Firebase configuration
     const firebaseConfig = {
-       apiKey: "AIzaSyBSn1RXV_rjf9_0ld0GBpETDQEB9rnQA3Y",
-  authDomain: "royal-coin-6d818.firebaseapp.com",
-  projectId: "royal-coin-6d818",
-  storageBucket: "royal-coin-6d818.appspot.com",
-  messagingSenderId: "163721073000",
-  appId: "1:163721073000:web:f325ab5becb1e79d19c6dd",
-  measurementId: "G-2JC6WM2TZS"
+        apiKey: "AIzaSyC5F-PTgnHgFXHGp7cl8OXIEZZMDqvdh7c",
+        authDomain: "game-clicker.firebaseapp.com",
+        projectId: "game-clicker",
+        storageBucket: "game-clicker.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:1234567890:web:abcdef123456"
     };
 
     // Initialize Firebase
@@ -308,284 +285,155 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    let user = null;
     let userDocRef = null;
-    let coinCount = 0;
-    let clickPower = 1;
-    let energy = 100;
-    let maxEnergy = 100;
-    let energyRegen = 10;
+    let userData = {
+        coins: 0,
+        energy: 100,
+        maxEnergy: 100,
+        energyRegen: 1,
+        clickPower: 1
+    };
 
-    auth.signInAnonymously().then(() => {
-        user = auth.currentUser;
-        userDocRef = db.collection("users").doc(user.uid);
-
-        userDocRef.get().then((doc) => {
+    // On Auth State Changed
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            userDocRef = db.collection('users').doc(user.uid);
+            const doc = await userDocRef.get();
             if (doc.exists) {
-                const userData = doc.data();
-                coinCount = userData.coins;
-                clickPower = userData.clickPower;
-                energy = userData.energy;
-                maxEnergy = userData.maxEnergy;
-                energyRegen = userData.energyRegen;
+                userData = doc.data();
                 updateUI();
             } else {
-                userDocRef.set({
-                    coins: coinCount,
-                    clickPower: clickPower,
-                    energy: energy,
-                    maxEnergy: maxEnergy,
-                    energyRegen: energyRegen
-                });
+                await userDocRef.set(userData);
             }
-        });
-
-        setInterval(() => {
-            if (energy < maxEnergy) {
-                energy = Math.min(maxEnergy, energy + energyRegen);
-                updateUI();
-                saveData();
-            }
-        }, 1000);
+        }
     });
 
+    // Sign in Anonymously
+    auth.signInAnonymously().catch((error) => {
+        console.error('Error signing in anonymously:', error);
+    });
+
+    const coinCountEl = document.getElementById('coinCount');
+    const energyFillEl = document.getElementById('energyFill');
+    const clickButton = document.getElementById('clickButton');
+
+    const shopButton = document.getElementById('shopButton');
+    const referralButton = document.getElementById('referralButton');
+    const taskButton = document.getElementById('taskButton');
+
+    const shopEl = document.getElementById('shop');
+    const closeShopEl = document.getElementById('closeShop');
+    const referralEl = document.getElementById('referral');
+    const closeReferralEl = document.getElementById('closeReferral');
+    const taskEl = document.getElementById('task');
+    const closeTaskEl = document.getElementById('closeTask');
+
+    // Update UI
     function updateUI() {
-        document.getElementById("coinCount").innerText = coinCount;
-        document.getElementById("energyFill").style.width = (energy / maxEnergy) * 100 + "%";
+        coinCountEl.textContent = userData.coins;
+        const energyPercentage = (userData.energy / userData.maxEnergy) * 100;
+        energyFillEl.style.width = `${energyPercentage}%`;
     }
 
-    function saveData() {
-        userDocRef.update({
-            coins: coinCount,
-            clickPower: clickPower,
-            energy: energy,
-            maxEnergy: maxEnergy,
-            energyRegen: energyRegen
-        });
-        saveDataToServer({
-            userId: user.uid,
-            coins: coinCount,
-            clickPower: clickPower,
-            energy: energy,
-            maxEnergy: maxEnergy,
-            energyRegen: energyRegen
-        });
-    }
-
-    // Пример кода для отправки данных из Telegram Web App в ваше API
-    function saveDataToServer(data) {
-        fetch('https://your-api-url.com/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Data saved:', data);
-        })
-        .catch((error) => {
-            console.error('Error saving data:', error);
-        });
-    }
-  // Закрытие окна магазина
-document.getElementById("closeShop").addEventListener("click", () => {
-    document.getElementById("shop").style.display = "none";
-});
-
-// Закрытие окна рефералов
-document.getElementById("closeReferral").addEventListener("click", () => {
-    document.getElementById("referral").style.display = "none";
-});
-
-// Закрытие окна задания
-document.getElementById("closeTask").addEventListener("click", () => {
-    document.getElementById("task").style.display = "none";
-});
-
-    document.getElementById("clickButton").addEventListener("click", () => {
-        if (energy >= clickPower) {
-            coinCount += clickPower;
-            energy -= clickPower;
+    // Click Button Event
+    clickButton.addEventListener('click', () => {
+        if (userData.energy > 0) {
+            userData.coins += userData.clickPower;
+            userData.energy -= 1;
             updateUI();
-            saveData();
+            saveUserData();
 
-            const coinFly = document.createElement("div");
-            coinFly.classList.add("coin-fly");
-            coinFly.innerText = "+" + clickPower;
+            // Add Coin Fly Effect
+            const coinFly = document.createElement('div');
+            coinFly.className = 'coin-fly';
+            coinFly.textContent = `+${userData.clickPower}`;
             document.body.appendChild(coinFly);
-            const rect = document.getElementById("clickButton").getBoundingClientRect();
-            coinFly.style.left = rect.left + rect.width / 2 + "px";
-            coinFly.style.top = rect.top + rect.height / 2 + "px";
+            const rect = clickButton.getBoundingClientRect();
+            coinFly.style.left = `${rect.left + rect.width / 2}px`;
+            coinFly.style.top = `${rect.top}px`;
             setTimeout(() => {
                 coinFly.remove();
             }, 1000);
+
+            // Vibrate on Click
+            if (navigator.vibrate) {
+                navigator.vibrate(50); // Вибрация 50 мс
+            }
         }
     });
 
-    document.getElementById("shopButton").addEventListener("click", () => {
-        document.getElementById("shop").style.display = "block";
+    // Save User Data to Firestore
+    async function saveUserData() {
+        if (userDocRef) {
+            await userDocRef.set(userData);
+        }
+    }
+
+    // Open and Close Modals
+    shopButton.addEventListener('click', () => {
+        shopEl.style.display = 'block';
+    });
+    closeShopEl.addEventListener('click', () => {
+        shopEl.style.display = 'none';
     });
 
-    document.getElementById("closeShop").addEventListener("click", () => {
-        document.getElementById("shop").style.display = "none";
+    referralButton.addEventListener('click', () => {
+        referralEl.style.display = 'block';
+    });
+    closeReferralEl.addEventListener('click', () => {
+        referralEl.style.display = 'none';
     });
 
-    document.getElementById("boostClickPower").addEventListener("click", () => {
-        const price = parseInt(document.getElementById("boostClickPowerPrice").innerText);
-        if (coinCount >= price) {
-            coinCount -= price;
-            clickPower += 1;
+    taskButton.addEventListener('click', () => {
+        taskEl.style.display = 'block';
+    });
+    closeTaskEl.addEventListener('click', () => {
+        taskEl.style.display = 'none';
+    });
+
+    // Shop Item Events
+    document.getElementById('boostClickPower').addEventListener('click', () => {
+        const cost = 100;
+        if (userData.coins >= cost) {
+            userData.coins -= cost;
+            userData.clickPower += 1;
             updateUI();
-            saveData();
+            saveUserData();
         }
     });
 
-    document.getElementById("boostEnergyRegen").addEventListener("click", () => {
-        const price = parseInt(document.getElementById("boostEnergyRegenPrice").innerText);
-        if (coinCount >= price) {
-            coinCount -= price;
-            energyRegen += 5;
+    document.getElementById('boostEnergyRegen').addEventListener('click', () => {
+        const cost = 150;
+        if (userData.coins >= cost) {
+            userData.coins -= cost;
+            userData.energyRegen += 1;
             updateUI();
-            saveData();
+            saveUserData();
         }
     });
 
-    document.getElementById("boostMaxEnergy").addEventListener("click", () => {
-        const price = parseInt(document.getElementById("boostMaxEnergyPrice").innerText);
-        if (coinCount >= price) {
-            coinCount -= price;
-            maxEnergy += 50;
+    document.getElementById('boostMaxEnergy').addEventListener('click', () => {
+        const cost = 175;
+        if (userData.coins >= cost) {
+            userData.coins -= cost;
+            userData.maxEnergy += 10;
+            userData.energy += 10;
             updateUI();
-            saveData();
+            saveUserData();
         }
     });
-    document.getElementById("clickButton").addEventListener("click", () => {
-    if (energy >= clickPower) {
-        coinCount += clickPower;
-        energy -= clickPower;
-        updateUI();
-        saveData();
-        navigator.vibrate(50); // Вибрация на 100 миллисекунд
-    }
-});
-  if ("vibrate" in navigator) {
-    document.getElementById("clickButton").addEventListener("click", () => {
-        if (energy >= clickPower) {
-            coinCount += clickPower;
-            energy -= clickPower;
+
+    // Energy Regen
+    setInterval(() => {
+        if (userData.energy < userData.maxEnergy) {
+            userData.energy += userData.energyRegen;
+            if (userData.energy > userData.maxEnergy) {
+                userData.energy = userData.maxEnergy;
+            }
             updateUI();
-            saveData();
-            navigator.vibrate(50); // Вибрация на 100 миллисекунд
+            saveUserData();
         }
-    });
-} else {
-    // Ваше устройство не поддерживает Vibration API
-    console.log("Vibration API не поддерживается");
-}
-
-    document.getElementById("referralButton").addEventListener("click", () => {
-        document.getElementById("referral").style.display = "block";
-        document.getElementById("referralCode").value = user.uid;
-    });
-
-    document.getElementById("closeReferral").addEventListener("click", () => {
-        document.getElementById("referral").style.display = "none";
-    });
-
-    document.getElementById("enterCodeButton").addEventListener("click", () => {
-        const code = document.getElementById("enterReferralCode").value;
-        if (code && code !== user.uid) {
-            db.collection("users").doc(code).get().then((doc) => {
-                if (doc.exists) {
-                    const referredUserData = doc.data();
-                    referredUserData.coins += 10000;
-                    db.collection("users").doc(code).update({
-                        coins: referredUserData.coins
-                    });
-
-                    coinCount += 10000;
-                    updateUI();
-                    saveData();
-                } else {
-                    alert("Referral code not found!");
-                }
-            });
-        } else {
-            alert("Invalid referral code!");
-        }
-    });
-
-    document.getElementById("taskButton").addEventListener("click", () => {
-        document.getElementById("task").style.display = "block";
-    });
-
-    document.getElementById("closeTask").addEventListener("click", () => {
-        document.getElementById("task").style.display = "none";
-    });
-    
-    // Функция для вибрации
-function vibrate() {
-    if ("vibrate" in navigator) {
-        navigator.vibrate(50); // Вибрация на 50 миллисекунд
-    }
-}
-
-// Добавление вибрации при клике на кнопку
-document.getElementById("clickButton").addEventListener("click", () => {
-    if (energy >= clickPower) {
-        coinCount += clickPower;
-        energy -= clickPower;
-        updateUI();
-        saveData();
-
-        // Вызов функции вибрации
-        vibrate();
-
-        const coinFly = document.createElement("div");
-        coinFly.classList.add("coin-fly");
-        coinFly.innerText = "+" + clickPower;
-        document.body.appendChild(coinFly);
-        const rect = document.getElementById("clickButton").getBoundingClientRect();
-        coinFly.style.left = rect.left + rect.width / 2 + "px";
-        coinFly.style.top = rect.top + rect.height / 2 + "px";
-        setTimeout(() => {
-            coinFly.remove();
-        }, 1000);
-    }
-});
-document.getElementById("boostClickPower").addEventListener("click", () => {
-    const price = parseInt(document.getElementById("boostClickPowerPrice").innerText);
-    if (coinCount >= price) {
-        coinCount -= price;
-        clickPower += 1;
-        updateUI();
-        saveData(); // Сохраняем данные после покупки
-    }
-});
-document.getElementById("clickButton").addEventListener("click", () => {
-    if (energy >= clickPower) {
-        coinCount += clickPower;
-        energy -= clickPower;
-        updateUI();
-        saveData(); // Сохраняем данные после каждого клика
-        
-        // Анимация с летающими монетами
-        const coinFly = document.createElement("div");
-        coinFly.classList.add("coin-fly");
-        coinFly.innerText = "+" + clickPower;
-        document.body.appendChild(coinFly);
-        const rect = document.getElementById("clickButton").getBoundingClientRect();
-        coinFly.style.left = rect.left + rect.width / 2 + "px";
-        coinFly.style.top = rect.top + rect.height / 2 + "px";
-        setTimeout(() => {
-            coinFly.remove();
-        }, 1000);
-    }
-});
-
+    }, 1000);
 </script>
-
 </body>
 </html>
