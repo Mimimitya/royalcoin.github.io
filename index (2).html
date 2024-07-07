@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: url('https://i.ibb.co/r4XRbmq/image.png') no-repeat center center;
+            background-size: cover;
+            color: #fff;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        .click-button {
+            width: 200px;
+            height: 200px;
+            background: url('https://i.ibb.co/XtWBWNp/image.png') no-repeat center center;
+            background-size: cover;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            margin: 20px;
+            transition: transform 0.1s ease;
+            outline: none;
+        }
+
+        .click-button:hover {
+            transform: scale(1.1);
+        }
+
+        .stats {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stats div {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .stats img {
+            margin-right: 10px;
+        }
+
+        .energy-bar-container {
+            width: 90%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .energy-bar {
+            width: 60%;
+            height: 30px;
+            background-color: #555;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-right: 20px;
+        }
+
+        .energy-fill {
+            height: 100%;
+            background: linear-gradient(to right, #f90, #ff0);
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .buttons-container {
+            margin-top: 40px;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .button {
+            width: 100%;
+            height: 100%;
+            background-color: #555;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 17px 10px;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+        }
+
+        .shop-button {
+            width: 60%;
+            height: 30px;
+            background: url('https://i.ibb.co/KLZJWHT/Group-67-1.png') no-repeat center center;
+        }
+
+        .referral-button {
+            width: 162px;
+            height: 56px;
+            background: url('https://i.ibb.co/548gjZy/Group-69-1.png') no-repeat center center;
+        }
+
+        .task-button {
+            width: 60%;
+            height: 30px;
+            background: url('https://i.ibb.co/m49RLVz/Group-70-2.png') no-repeat center center;
+        }
+
+        .shop, .referral, .task {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            background: #333;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            color: #fff;
+            z-index: 1000;
+        }
+
+        .shop-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #444;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .shop-item:hover {
+            background: #555;
+        }
+
+        .close-shop, .close-referral, .close-task {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .coin-fly {
+            position: absolute;
+            color: #ff0;
+            font-size: 20px;
+            animation: fly 1s linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes fly {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .click-button {
+                width: 100px;
+                height: 100px;
+            }
+
+            .stats {
+                font-size: 24px;
+            }
+
+            .energy-bar {
+                width: 80%;
+                height: 20px;
+            }
+
+            .button {
+                width: 150px;
+                height: 70px;
+            }
+
+            .shop, .referral, .task {
+                width: 90%;
+                max-width: 300px;
+                padding: 10px;
+            }
+
+            .shop-item {
+                margin: 5px 0;
+                padding: 5px;
+            }
+        }
+
+        .click-button {
+            -webkit-tap-highlight-color: transparent; /* Для браузеров на базе WebKit (Chrome, Safari) */
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0); /* Дополнительно для WebKit, чтобы подавить синий цвет фона */
+            -moz-tap-highlight-color: transparent; /* Для Firefox */
+            -ms-touch-action: manipulation; /* Для Internet Explorer */
+            touch-action: manipulation; /* Современные браузеры */
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="stats">
+        <div>Coins: <span id="coinCount">0</span></div>
+    </div>
+    <button class="click-button" id="clickButton"></button>
+    <div class="energy-bar-container">
+        <div class="energy-bar">
+            <div class="energy-fill" id="energyFill"></div>
+        </div>
+    </div>
+    <div class="buttons-container">
+        <button class="button shop-button" id="shopButton"></button>
+        <button class="button referral-button" id="referralButton"></button>
+        <button class="button task-button" id="taskButton"></button>
+    </div>
+</div>
+
+<div class="shop" id="shop">
+    <div class="close-shop" id="closeShop">✖</div>
+    <div class="shop-item" id="boostClickPower">Boost Click Power (Cost: <span id="boostClickPowerPrice">100</span> coins)</div>
+    <div class="shop-item" id="boostEnergyRegen">Boost Energy Regen (Cost: <span id="boostEnergyRegenPrice">150</span> coins)</div>
+    <div class="shop-item" id="boostMaxEnergy">Boost Max Energy (Cost: <span id="boostMaxEnergyPrice">175</span> coins)</div>
+</div>
+
+<div class="referral" id="referral">
+    <div class="close-referral" id="closeReferral">✖</div>
+    <div>Referral Code: <input type="text" id="referralCode" readonly></div>
+    <div>Enter Referral Code: <input type="text" id="enterReferralCode"></div>
+    <button id="enterCodeButton">Submit</button>
+</div>
+
+<div class="task" id="task">
+    <div class="close-task" id="closeTask">✖</div>
+    <div>
+        <a href="https://t.me/royalcoin2024" target="_blank">
+            Subscribe to Telegram Channel (+10,000 coins)
+        </a>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyC5F-PTgnHgFXHGp7cl8OXIEZZMDqvdh7c",
+        authDomain: "game-clicker.firebaseapp.com",
+        projectId: "game-clicker",
+        storageBucket: "game-clicker.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:1234567890:web:abcdef123456"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let userDocRef = null;
+    let userData = {
+        coins: 0,
+        energy: 100,
+        maxEnergy: 100,
+        energyRegen: 1,
+        clickPower: 1
+    };
+
+    // On Auth State Changed
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            userDocRef = db.collection('users').doc(user.uid);
+            const doc = await userDocRef.get();
+            if (doc.exists) {
+                userData = doc.data();
+                updateUI();
+            } else {
+                await userDocRef.set(userData);
+            }
+        }
+    });
+
+    // Sign in Anonymously
+    auth.signInAnonymously().catch((error) => {
+        console.error('Error signing in anonymously:', error);
+    });
+
+    const coinCountEl = document.getElementById('coinCount');
+    const energyFillEl = document.getElementById('energyFill');
+    const clickButton = document.getElementById('clickButton');
+
+    const shopButton = document.getElementById('shopButton');
+    const referralButton = document.getElementById('referralButton');
+    const taskButton = document.getElementById('taskButton');
+
+    const shopEl = document.getElementById('shop');
+    const closeShopEl = document.getElementById('closeShop');
+    const referralEl = document.getElementById('referral');
+    const closeReferralEl = document.getElementById('closeReferral');
+    const taskEl = document.getElementById('task');
+    const closeTaskEl = document.getElementById('closeTask');
+
+    // Update UI
+    function updateUI() {
+        coinCountEl.textContent = userData.coins;
+        const energyPercentage = (userData.energy / userData.maxEnergy) * 100;
+        energyFillEl.style.width = `${energyPercentage}%`;
+    }
+
+    // Click Button Event
+    clickButton.addEventListener('click', () => {
+        if (userData.energy > 0) {
+            userData.coins += userData.clickPower;
+            userData.energy -= 1;
+            updateUI();
+            saveUserData();
+
+            // Add Coin Fly Effect
+            const coinFly = document.createElement('div');
+            coinFly.className = 'coin-fly';
+            coinFly.textContent = `+${userData.clickPower}`;
+            document.body.appendChild(coinFly);
+            const rect = clickButton.getBoundingClientRect();
+            coinFly.style.left = `${rect.left + rect.width / 2}px`;
+            coinFly.style.top = `${rect.top}px`;
+            setTimeout(() => {
+                coinFly.remove();
+            }, 1000);
+
+            // Vibrate on Click
+            if (navigator.vibrate) {
+                navigator.vibrate(50); // Вибрация 50 мс
+            }
+        }
+    });
+
+    // Save User Data to Firestore
+    async function saveUserData() {
+        if (userDocRef) {
+            await userDocRef.set(userData);
+        }
+    }
+
+    // Open and Close Modals
+    shopButton.addEventListener('click', () => {
+        shopEl.style.display = 'block';
+    });
+    closeShopEl.addEventListener('click', () => {
+        shopEl.style.display = 'none';
+    });
+
+    referralButton.addEventListener('click', () => {
+        referralEl.style.display = 'block';
+    });
+    closeReferralEl.addEventListener('click', () => {
+        referralEl.style.display = 'none';
+    });
+
+    taskButton.addEventListener('click', () => {
+        taskEl.style.display = 'block';
+    });
+    closeTaskEl.addEventListener('click', () => {
+        taskEl.style.display = 'none';
+    });
+
+    // Shop Item Events
+    document.getElementById('boostClickPower').addEventListener('click', () => {
+        const cost = 100;
+        if (userData.coins >= cost) {
+            userData.coins -= cost;
+            userData.clickPower += 1;
+            updateUI();
+            saveUserData();
+        }
+    });
+
+    document.getElementById('boostEnergyRegen').addEventListener('click', () => {
+        const cost = 150;
+        if (userData.coins >= cost) {
+            userData.coins -= cost;
+            userData.energyRegen += 1;
+            updateUI();
+            saveUserData();
+        }
+    });
+
+    document.getElementById('boostMaxEnergy').addEventListener('click', () => {
+        const cost = 175;
+        if (userData.coins >= cost) {
+            userData.coins -= cost;
+            userData.maxEnergy += 10;
+            userData.energy += 10;
+            updateUI();
+            saveUserData();
+        }
+    });
+
+    // Energy Regen
+    setInterval(() => {
+        if (userData.energy < userData.maxEnergy) {
+            userData.energy += userData.energyRegen;
+            if (userData.energy > userData.maxEnergy) {
+                userData.energy = userData.maxEnergy;
+            }
+            updateUI();
+            saveUserData();
+        }
+    }, 1000);
+</script>
+</body>
+</html>
